@@ -1,0 +1,56 @@
+
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    container_name: commerce_db
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: local_secure_password
+      POSTGRES_DB: commerce_intel
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - commerce_network
+
+  backend:
+    build: ./backend
+    container_name: commerce_backend
+    restart: always
+    volumes:
+      - ./backend:/code
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://postgres:local_secure_password@db:5432/commerce_intel
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+    depends_on:
+      - db
+    networks:
+      - commerce_network
+
+  frontend:
+    build: ./frontend
+    container_name: commerce_frontend
+    restart: always
+    volumes:
+      - ./frontend:/app
+      - /app/.next
+      - /app/node_modules
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+    depends_on:
+      - backend
+    networks:
+      - commerce_network
+
+volumes:
+  pgdata:
+
+networks:
+  commerce_network:
+    driver: bridge
