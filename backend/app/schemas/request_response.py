@@ -22,3 +22,9 @@ class ProductCreate(BaseModel):
 class SearchQuery(BaseModel):
     query: str
     limit: int = 5
+
+    
+from pydantic import BaseModel
+
+class ChatRequest(BaseModel):
+    prompt: str

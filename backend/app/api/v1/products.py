@@ -77,3 +77,23 @@ async def compare_products(id_a: str, id_b: str, db: AsyncSession = Depends(get_
         "product_b": {"id": product_b.id, "name": product_b.name, "price": product_b.price},
         "ai_analysis": comparison
     }
+
+from app.services.ai import analyze_product_reviews
+
+@router.get("/{product_id}/insights")
+async def get_product_insights(product_id: str, db: AsyncSession = Depends(get_db)):
+    """
+    Fetches a product, grabs its reviews, and runs AI sentiment analysis.
+    """
+    product = await get_product_by_id(db, product_id)
+    
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+
+    insights = await analyze_product_reviews(product, product.reviews)
+    
+    return {
+        "product_name": product.name,
+        "review_count": len(product.reviews),
+        "insights": insights
+    }

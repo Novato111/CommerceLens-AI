@@ -1,9 +1,22 @@
-from pydantic_settings import BaseSettings, SettingsConfigDict
+import os
+from dotenv import load_dotenv
 
-class Settings(BaseSettings):
-    DATABASE_URL: str = "postgresql+asyncpg://postgres:local_secure_password@db:5432/commerce_intel"
-    GEMINI_API_KEY: str
+load_dotenv()
 
-    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+class Settings:
+    PROJECT_NAME: str = "Commerce AI Intelligence Platform"
+    VERSION: str = "1.0.0"
+
+    # AI Configuration
+    GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY")
+    EMBED_MODEL: str = os.getenv("EMBED_MODEL", "gemini-embedding-001")
+    MAIN_MODEL: str = os.getenv("MAIN_MODEL", "gemini-2.0-flash")
+    
+    # Database Configuration
+    DATABASE_URL: str = os.getenv(
+        "DATABASE_URL", 
+        "postgresql+asyncpg://postgres:postgres@db:5432/commerce"
+    )
 
 settings = Settings()
+config = settings  # Alias to prevent import errors across files

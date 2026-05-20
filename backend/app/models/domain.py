@@ -34,6 +34,7 @@ class Product(Base):
         "Review",
         back_populates="product",
         cascade="all, delete-orphan",
+        lazy="selectin",
     )
 
 

@@ -106,3 +106,62 @@ async def generate_product_comparison(product_a, product_b) -> dict:
     except Exception as e:
         print(f"Error generating comparison: {e}")
         return {"error": "Failed to generate comparison"}
+    
+
+
+async def analyze_product_reviews(product, reviews) -> dict:
+    """
+    Forces Gemini to analyze a list of reviews and output structured sentiment JSON.
+    """
+    if not reviews:
+        return {"error": "No reviews available to analyze."}
+
+    review_text = "\n".join([f"Rating: {r.rating}/5 - {r.review_text}" for r in reviews])
+
+    prompt = f"""
+    You are a consumer insights analyst. Analyze the following customer reviews for {product.name}.
+    Output ONLY a valid JSON object. Do not use markdown formatting like ```json.
+    
+    Reviews:
+    {review_text}
+    
+    Expected JSON format:
+    {{
+      "overall_sentiment": "Positive, Neutral, or Negative",
+      "score_out_of_10": 8.5,
+      "top_praises": ["praise 1", "praise 2"],
+      "dealbreakers": ["complaint 1", "complaint 2"],
+      "buyer_advice": "One sentence summarizing if they should buy it based on reviews."
+    }}
+    """
+
+    try:
+        response = await client.aio.models.generate_content(
+            model='gemini-2.5-flash',
+            contents=prompt,
+        )
+        clean_text = response.text.replace("```json", "").replace("```", "").strip()
+        return json.loads(clean_text)
+    except Exception as e:
+        print(f"Error analyzing reviews: {e}")
+        return {"error": "Failed to analyze reviews"}
+    
+
+
+def generate_rag_prompt(user_query: str, context: str) -> str:
+    """
+    Constructs the prompt for Gemini, injecting the database context.
+    """
+    return f"""
+    You are an expert commerce AI assistant. 
+    Use the following product information to answer the user's question. 
+    If the context does not contain the answer, say you don't know based on the available catalog.
+
+    CONTEXT:
+    {context}
+
+    USER QUESTION:
+    {user_query}
+    
+    RESPONSE:
+    """
